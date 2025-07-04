@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منوی دیجیتال رستوران و کافی شاپ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .menu-item {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .price-tag {
+            background-color: #f97316;
+            color: white;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-weight: 700;
+        }
+        
+        .admin-panel {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 40;
+        }
+        
+        .cart-panel {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            z-index: 40;
+        }
+        
+        .disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .order-item {
+            border-bottom: 1px dashed #e5e7eb;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .invoice {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .invoice-header {
+            border-bottom: 2px solid #f3f4f6;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .invoice-footer {
+            border-top: 2px solid #f3f4f6;
+            padding-top: 1rem;
+            margin-top: 2rem;
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .invoice, .invoice * {
+                visibility: visible;
+            }
+            .invoice {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                box-shadow: none;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+        
+        /* استایل‌های چت */
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: #f9fafb;
+        }
+        
+        .message {
+            max-width: 70%;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            word-wrap: break-word;
+        }
+        
+        .customer-message {
+            background-color: #e5f2ff;
+            margin-left: auto;
+            border-bottom-right-radius: 0.25rem;
+        }
+        
+        .admin-message {
+            background-color: #f0f0f0;
+            margin-right: auto;
+            border-bottom-left-radius: 0.25rem;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        /* استایل‌های دارک مود */
+        .dark {
+            color-scheme: dark;
+        }
+
+        .dark body {
+            background-color: #111827;
+            color: #f3f4f6;
+        }
+
+        .dark .menu-item,
+        .dark footer,
+        .dark header,
+        .dark .bg-white {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+
+        .dark .text-gray-800 {
+            color: #f3f4f6;
+        }
+
+        .dark .text-gray-600 {
+            color: #d1d5db;
+        }
+
+        .dark .bg-gray-100 {
+            background-color: #374151;
+        }
+
+        .dark .border-gray-200,
+        .dark .border-gray-300 {
+            border-color: #4b5563;
+        }
+
+        .dark .invoice,
+        .dark .chat-container {
+            background-color: #1f2937;
+            border-color: #4b5563;
+        }
+
+        .dark .admin-message {
+            background-color: #374151;
+        }
+
+        .dark .customer-message {
+            background-color: #1e40af;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <header class="bg-white shadow-md dark:bg-gray-800">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-white">منوی دیجیتال</h1>
+                <div class="flex items-center gap-6">
+                    
+                    <button id="view-cart" class="relative hover:opacity-80 transition">
+                        <i class="fas fa-shopping-cart text-2xl text-gray-700 dark:text-white"></i>
+                        <span id="cart-count" class="badge hidden">0</span>
+                    </button>
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b345e1ba-3183-402f-8b6e-a7bd0ba26268.png" alt="لوگوی رستوران با طرح مدرن در رنگ های نارنجی و سفید" class="h-16 w-16 rounded-full">
+                </div>
+            </div>
+            <p class="text-gray-600 dark:text-gray-300 mt-2">رستوران و کافی شاپ ما</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="menu-items">
+            <!-- منوی پیش فرض -->
+            <div class="menu-item bg-white dark:bg-gray-800 shadow-sm p-5">
+                <div class="h-48 w-full bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/2b48a031-0902-4996-9751-3429284a09b2.png" alt="قهوه اسپرسو در فنجان سفید با خامه روی آن و دانه های قهوه در اطراف" class="h-full w-full object-cover">
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">قهوه اسپرسو</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">قهوه غلیظ و معطر با طعمی عالی</p>
+                <div class="flex justify-between items-center">
+                    <span class="price-tag">35,000 تومان</span>
+                    <button class="add-to-cart bg-orange-100 text-orange-600 px-4 py-2 rounded-lg hover:bg-orange-200 transition" data-id="1">اضافه به سبد</button>
+                </div>
+            </div>
+
+            <div class="menu-item bg-white dark:bg-gray-800 shadow-sm p-5">
+                <div class="h-48 w-full bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/29b484f3-cbdb-4269-a3d4-337b10ef90db.png" alt="برگر کلاسیک با پنیر آب شده و سبزیجات تازه روی میز چوبی" class="h-full w-full object-cover">
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">برگر کلاسیک</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">برگر با گوشت چرخ کرده ممتاز و پنیر چدار</p>
+                <div class="flex justify-between items-center">
+                    <span class="price-tag">85,000 تومان</span>
+                    <button class="add-to-cart bg-orange-100 text-orange-600 px-4 py-2 rounded-lg hover:bg-orange-200 transition" data-id="2">اضافه به سبد</button>
+                </div>
+            </div>
+
+            <div class="menu-item bg-white dark:bg-gray-800 shadow-sm p-5">
+                <div class="h-48 w-full bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/d8f8b642-9635-4acc-95ba-5542108ebad5.png" alt="سالاد سزار تازه با سس مخصوص و نان تست برشته شده" class="h-full w-full object-cover">
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">سالاد سزار</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">سالاد تازه با سس سزار مخصوص</p>
+                <div class="flex justify-between items-center">
+                    <span class="price-tag">55,000 تومان</span>
+                    <button class="add-to-cart bg-orange-100 text-orange-600 px-4 py-2 rounded-lg hover:bg-orange-200 transition" data-id="3">اضافه به سبد</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- فوتر -->
+    <footer class="bg-white dark:bg-gray-800 border-t dark:border-gray-700 mt-12 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600 dark:text-gray-300">
+            <p>ساخته شده با ❤️ توسط تیم <span class="font-bold text-orange-500">آرگو</span></p>
+        </div>
+    </footer>
+
+    <!-- دکمه ورود به پنل ادمین -->
+    <div class="admin-panel">
+        <button id="admin-btn" class="bg-gray-800 dark:bg-gray-700 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 hover:bg-gray-700 dark:hover:bg-gray-600 transition">
+            <i class="fas fa-user-shield"></i>
+            ورود به پنل ادمین
+        </button>
+    </div>
+
+    <!-- دکمه مشاهده سبد خرید -->
+    <div class="cart-panel">
+        <button id="view-cart-btn" class="bg-orange-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 hover:bg-orange-600 transition">
+            <i class="fas fa-shopping-cart"></i>
+            سبد خرید
+        </button>
+    </div>
+
+    <!-- مدال لاگین -->
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md relative">
+            <button id="close-login-modal" class="absolute left-4 top-4 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">ورود به پنل مدیریت</h2>
+            <form id="login-form" onsubmit="return false;">
+                <div class="mb-4">
+                    <label for="username" class="block text-gray-700 dark:text-gray-300 mb-2">نام کاربری</label>
+                    <input type="text" id="username" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white" placeholder="نام کاربری">
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-gray-700 dark:text-gray-300 mb-2">رمز عبور</label>
+                    <input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white" placeholder="رمز عبور">
+                </div>
+                <button type="submit" class="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition">ورود</button>
+            </form>
+            <div id="login-error" class="text-red-500 mt-4 text-center hidden">نام کاربری یا رمز عبور نادرست است</div>
+        </div>
+    </div>
+
+    <!-- پنل ادمین -->
+    <div id="admin-panel" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 overflow-auto hidden">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">پنل مدیریت منو</h1>
+                <button id="logout-btn" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <i class="fas fa-sign-out-alt"></i>
+                    خروج
+                </button>
+            </div>
+            
+            <div id="admin-content">
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
+                    <h2 class="text-xl font-bold mb-4 dark:text-white">اضافه کردن محصول جدید</h2>
+                    <form id="add-product-form" onsubmit="return false;">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="product-name" class="block text-gray-700 dark:text-gray-300 mb-2">نام محصول</label>
+                                <input type="text" id="product-name" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label for="product-price" class="block text-gray-700 dark:text-gray-300 mb-2">قیمت (تومان)</label>
+                                <input type="number" id="product-price" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="product-description" class="block text-gray-700 dark:text-gray-300 mb-2">توضیحات</label>
+                            <textarea id="product-description" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white" rows="3"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="product-image" class="block text-gray-700 dark:text-gray-300 mb-2">لینک تصویر</label>
+                            <input type="text" id="product-image" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white" placeholder="https://placehold.co/600x400">
+                        </div>
+                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">اضافه کردن محصول</button>
+                    </form>
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
+                    <h2 class="text-xl font-bold mb-4 dark:text-white">لیست محصولات</h2>
+                    <div id="products-list">
+                        <!-- محصولات به صورت داینامیک اضافه می‌شوند -->
+                    </div>
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
+                    <h2 class="text-xl font-bold mb-4 dark:text-white">تاریخچه سفارشات</h2>
+                    <div id="orders-list">
+                        <!-- سفارشات به صورت داینامیک اضافه می‌شوند -->
+                    </div>
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                    <h2 class="text-xl font-bold mb-4 dark:text-white">سیستم چت با مشتریان</h2>
+                    <div id="chat-section">
+                        <div class="chat-container dark:bg-gray-700" id="admin-chat-messages">
+                            <!-- پیام‌های چت اینجا نمایش داده می‌شوند -->
+                        </div>
+                        <div class="chat-input-container">
+                            <input type="text" id="admin-chat-input" class="flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white" placeholder="پیام خود را بنویسید...">
+                            <button id="admin-send-message" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مدال ویرایش -->
+    <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">ویرایش محصول</h2>
+            <form id="edit-product-form" onsubmit="return false;">
+                <input type="hidden" id="edit-index">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="edit-name" class="block text-gray-700 dark:text-gray-300 mb-2">نام محصول</label>
+                        <input type="text" id="edit-name" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label for="edit-price" class="block text-gray-700 dark:text-gray-300 mb-2">قیمت (تومان)</label>
+                        <input type="number" id="edit-price" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-description" class="block text-gray-700 dark:text-gray-300 mb-2">توضیحات</label>
+                    <textarea id="edit-description" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white" rows="3"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-image" class="block text-gray-700 dark:text-gray-300 mb-2">لینک تصویر</label>
+                    <input type="text" id="edit-image" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" id="cancel-edit" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">انصراف</button>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">ذخیره تغییرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- صفحه سبد خرید -->
+    <div id="cart-page" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 overflow-auto hidden">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">سبد خرید شما</h1>
+                <button id="close-cart" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <i class="fas fa-times"></i>
+                    بستن
+                </button>
+            </div>
+            
+            <div id="cart-content">
+                <div id="cart-items" class="mb-8">
+                    <!-- آیتم‌های سبد خرید به صورت داینامیک اضافه می‌شوند -->
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold dark:text-white">جمع کل</h2>
+                        <span id="cart-total" class="text-2xl font-bold dark:text-white">0 تومان</span>
+                    </div>
+                    <button id="checkout-btn" class="w-full bg-green-500 text-white py-3 px-4 rounded-lg hover:bg-green-600 transition text-lg">
+                        پرداخت نهایی
+                    </button>
+                </div>
+            </div>
+            
+            <div id="empty-cart-message" class="text-center py-12 hidden">
+                <i class="fas fa-shopping-cart text-5xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl text-gray-500 dark:text-gray-400">سبد خرید شما خالی است</h3>
+                <p class="text-gray-400 dark:text-gray-500 mt-2">برای افزودن محصول به سبد خرید، از منوی اصلی اقدام کنید</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- فرم اطلاعات مشتری -->
+    <div id="customer-info-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">اطلاعات مشتری</h2>
+            <form id="customer-info-form" onsubmit="return false;">
+                <div class="mb-4">
+                    <label for="customer-name" class="block text-gray-700 dark:text-gray-300 mb-2">نام و نام خانوادگی</label>
+                    <input type="text" id="customer-name" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white" required>
+                </div>
+                <div class="mb-4">
+                    <label for="customer-phone" class="block text-gray-700 dark:text-gray-300 mb-2">شماره تماس</label>
+                    <input type="tel" id="customer-phone" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white" required>
+                </div>
+                <div class="mb-4">
+                    <label for="table-number" class="block text-gray-700 dark:text-gray-300 mb-2">شماره میز</label>
+                    <input type="number" id="table-number" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white" required>
+                </div>
+                <div class="mb-6">
+                    <label for="order-notes" class="block text-gray-700 dark:text-gray-300 mb-2">توضیحات سفارش (اختیاری)</label>
+                    <textarea id="order-notes" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white" rows="3"></textarea>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" id="cancel-customer-info" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">انصراف</button>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">تأیید و ادامه</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- صفحه تأیید سفارش -->
+    <div id="order-confirmation" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 overflow-auto hidden">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">تأیید نهایی سفارش</h1>
+                <button id="close-order-confirmation" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <i class="fas fa-times"></i>
+                    بستن
+                </button>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
+                <h2 class="text-xl font-bold mb-4 dark:text-white">اطلاعات مشتری</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p class="text-gray-600 dark:text-gray-300">نام:</p>
+                        <p id="confirm-name" class="font-bold dark:text-white"></p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600 dark:text-gray-300">شماره تماس:</p>
+                        <p id="confirm-phone" class="font-bold dark:text-white"></p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600 dark:text-gray-300">شماره میز:</p>
+                        <p id="confirm-table" class="font-bold dark:text-white"></p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600 dark:text-gray-300">تاریخ سفارش:</p>
+                        <p id="confirm-date" class="font-bold dark:text-white"></p>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <p class="text-gray-600 dark:text-gray-300">توضیحات:</p>
+                    <p id="confirm-notes" class="font-bold dark:text-white"></p>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
+                <h2 class="text-xl font-bold mb-4 dark:text-white">جزئیات سفارش</h2>
+                <div id="order-items">
+                    <!-- آیتم‌های سفارش به صورت داینامیک اضافه می‌شوند -->
+                </div>
+                <div class="border-t dark:border-gray-700 pt-4 mt-4">
+                    <div class="flex justify-between items-center">
+                        <p class="text-lg font-bold dark:text-white">جمع کل:</p>
+                        <p id="confirm-total" class="text-xl font-bold dark:text-white"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-4">
+                <button id="back-to-cart" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-6 py-3 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    بازگشت به سبد خرید
+                </button>
+                <button id="confirm-order" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition">
+                    تأیید و ثبت نهایی سفارش
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- فاکتور مشتری -->
+    <div id="customer-invoice" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 overflow-auto hidden">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">فاکتور سفارش</h1>
+                <div class="flex gap-2">
+                    <button id="print-invoice" class="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-600 transition">
+                        <i class="fas fa-print"></i>
+                        پرینت
+                    </button>
+                    <button id="close-invoice" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                        <i class="fas fa-times"></i>
+                        بستن
+                    </button>
+                </div>
+            </div>
+            
+            <div class="invoice dark:bg-gray-800">
+                <div class="invoice-header dark:border-gray-700">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold dark:text-white">رستوران و کافی شاپ ما</h2>
+                            <p class="text-gray-600 dark:text-gray-300">فاکتور سفارش</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-gray-600 dark:text-gray-300">شماره فاکتور:</p>
+                            <p id="invoice-number" class="font-bold dark:text-white"></p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-gray-600 dark:text-gray-300">تاریخ سفارش:</p>
+                            <p id="invoice-date" class="font-bold dark:text-white"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 dark:text-gray-300">وضعیت سفارش:</p>
+                            <p id="invoice-status" class="font-bold text-green-500">تکمیل شده</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold mb-4 dark:text-white">مشخصات مشتری</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-gray-600 dark:text-gray-300">نام مشتری:</p>
+                            <p id="invoice-customer-name" class="font-bold dark:text-white"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 dark:text-gray-300">شماره تماس:</p>
+                            <p id="invoice-customer-phone" class="font-bold dark:text-white"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 dark:text-gray-300">شماره میز:</p>
+                            <p id="invoice-table" class="font-bold dark:text-white"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 dark:text-gray-300">توضیحات:</p>
+                            <p id="invoice-notes" class="font-bold dark:text-white"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold mb-4 dark:text-white">جزئیات سفارش</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-gray-100 dark:bg-gray-700">
+                                    <th class="text-right py-3 px-4 dark:text-white">محصول</th>
+                                    <th class="text-center py-3 px-4 dark:text-white">تعداد</th>
+                                    <th class="text-left py-3 px-4 dark:text-white">قیمت واحد</th>
+                                    <th class="text-left py-3 px-4 dark:text-white">جمع</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoice-items">
+                                <!-- آیتم‌های فاکتور به صورت داینامیک اضافه می‌شوند -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="invoice-footer dark:border-gray-700">
+                    <div class="flex justify-end">
+                        <div class="w-full md:w-1/2">
+                            <div class="flex justify-between py-2">
+                                <span class="font-bold dark:text-white">جمع کل:</span>
+                                <span id="invoice-subtotal" class="font-bold dark:text-white"></span>
+                            </div>
+                            <div class="flex justify-between py-2 border-t border-gray-200 dark:border-gray-700">
+                                <span class="font-bold text-lg dark:text-white">مبلغ قابل پرداخت:</span>
+                                <span id="invoice-total" class="font-bold text-lg text-green-500"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center text-gray-500 dark:text-gray-400">
+                    <p>با تشکر از انتخاب شما</p>
+                    <p class="mt-2">لطفاً برای هرگونه سؤال یا مشکل با مدیریت تماس بگیرید</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- فاکتور مدیریت -->
+    <div id="admin-invoice" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 overflow-auto hidden">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">فاکتور مدیریتی</h1>
+                <div class="flex gap-2">
+                    <button id="print-admin-invoice" class="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-600 transition">
+                        <i class="fas fa-print"></i>
+                        پرینت
+                    </button>
+                    <button id="close-admin-invoice" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                        <i class="fas fa-times"></i>
+                        بستن
+                    </button>
+                </div>
+            </div>
+            
+            <div class="invoice dark:bg-gray-800">
+                <div class="invoice-header dark:border-gray-700">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold dark:text-white">رستوران و کافی شاپ ما</h2>
+                            <p class="text-gray-600 dark:text-gray-300">فاکتور مدیریتی</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-gray-600 dark:text-gray-300">شماره سفارش:</p>
+                            <p id="admin-invoice-number" class="font-bold dark:text-white"></p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-gray-600 dark:text-gray-300">تاریخ سفارش:</p>
+                            <p id="admin-invoice-date" class="font-bold dark:text-white"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 dark:text-gray-300">وضعیت سفارش:</p>
+                            <p id="admin-invoice-status" class="font-bold text-green-500"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold mb-4 dark:text-white">مشخصات مشتری</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-gray-600 dark:text-gray-300">نام مشتری:</p>
+                            <p id="admin-invoice-customer-name" class="font-bold dark:text-white"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 dark:text-gray-300">شماره تماس:</p>
+                            <p id="admin-invoice-customer-phone" class="font-bold dark:text-white"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 dark:text-gray-300">شماره میز:</p>
+                            <p id="admin-invoice-table" class="font-bold dark:text-white"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 dark:text-gray-300">توضیحات:</p>
+                            <p id="admin-invoice-notes" class="font-bold dark:text-white"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold mb-4 dark:text-white">جزئیات سفارش</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-gray-100 dark:bg-gray-700">
+                                    <th class="text-right py-3 px-4 dark:text-white">محصول</th>
+                                    <th class="text-center py-3 px-4 dark:text-white">تعداد</th>
+                                    <th class="text-left py-3 px-4 dark:text-white">قیمت واحد</th>
+                                    <th class="text-left py-3 px-4 dark:text-white">جمع</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-invoice-items">
+                                <!-- آیتم‌های فاکتور به صورت داینامیک اضافه می‌شوند -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="invoice-footer dark:border-gray-700">
+                    <div class="flex justify-end">
+                        <div class="w-full md:w-1/2">
+                            <div class="flex justify-between py-2">
+                                <span class="font-bold dark:text-white">جمع کل:</span>
+                                <span id="admin-invoice-subtotal" class="font-bold dark:text-white"></span>
+                            </div>
+                            <div class="flex justify-between py-2 border-t border-gray-200 dark:border-gray-700">
+                                <span class="font-bold text-lg dark:text-white">مبلغ قابل پرداخت:</span>
+                                <span id="admin-invoice-total" class="font-bold text-lg text-green-500"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center text-gray-500 dark:text-gray-400">
+                    <p>این فاکتور برای استفاده مدیریتی می‌باشد</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- سیستم چت مشتری -->
+    <div id="customer-chat" class="fixed bottom-6 right-6 z-40 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-80 overflow-hidden">
+            <div class="bg-orange-500 text-white px-4 py-3 flex justify-between items-center">
+                <h3 class="font-bold">چت با پشتیبانی</h3>
+                <button id="close-chat" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="chat-container h-64 dark:bg-gray-700" id="customer-chat-messages">
+                <!-- پیام‌های چت اینجا نمایش داده می‌شوند -->
+            </div>
+            <div class="chat-input-container p-3 bg-gray-50 dark:bg-gray-700">
+                <input type="text" id="customer-chat-input" class="flex-grow px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-600 dark:text-white" placeholder="پیام خود را بنویسید...">
+                <button id="customer-send-message" class="bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 transition">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- دکمه باز کردن چت -->
+    <div class="fixed bottom-6 right-6 z-40" id="open-chat-btn">
+        <button class="bg-orange-500 text-white p-4 rounded-full shadow-lg hover:bg-orange-600 transition">
+            <i class="fas fa-comments text-xl"></i>
+        </button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // اطلاعات محصولات با ID منحصر به فرد
+            let products = JSON.parse(localStorage.getItem('restaurant_products')) || [
+                {
+                    id: "1",
+                    name: "قهوه اسپرسو",
+                    description: "قهوه غلیظ و معطر با طعمی عالی",
+                    price: 35000,
+                    image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/2b48a031-0902-4996-9751-3429284a09b2.png"
+                },
+                {
+                    id: "2",
+                    name: "برگر کلاسیک",
+                    description: "برگر با گوشت چرخ کرده ممتاز و پنیر چدار",
+                    price: 85000,
+                    image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/29b484f3-cbdb-4269-a3d4-337b10ef90db.png"
+                },
+                {
+                    id: "3",
+                    name: "سالاد سزار",
+                    description: "سالاد تازه با سس سزار مخصوص",
+                    price: 55000,
+                    image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/d8f8b642-9635-4acc-95ba-5542108ebad5.png"
+                }
+            ];
+
+            // سبد خرید
+            let cart = JSON.parse(localStorage.getItem('restaurant_cart')) || [];
+
+            // سفارشات
+            let orders = JSON.parse(localStorage.getItem('restaurant_orders')) || [];
+
+            // اطلاعات مشتری فعلی
+            let currentCustomer = {
+                name: '',
+                phone: '',
+                table: '',
+                notes: ''
+            };
+
+            // اطلاعات لاگین
+            const ADMIN_CREDENTIALS = {
+                username: "admin",
+                password: "admin123"
+            };
+
+            // اطلاعات چت
+            let chats = JSON.parse(localStorage.getItem('restaurant_chats')) || {};
+            let currentChatId = null;
+
+            // DOM Elements
+            const adminBtn = document.getElementById('admin-btn');
+            const loginModal = document.getElementById('login-modal');
+            const closeLoginModal = document.getElementById('close-login-modal');
+            const loginForm = document.getElementById('login-form');
+            const loginError = document.getElementById('login-error');
+            const adminPanel = document.getElementById('admin-panel');
+            const logoutBtn = document.getElementById('logout-btn');
+            const addProductForm = document.getElementById('add-product-form');
+            const productsList = document.getElementById('products-list');
+            const editModal = document.getElementById('edit-modal');
+            const editProductForm = document.getElementById('edit-product-form');
+            const cancelEditBtn = document.getElementById('cancel-edit');
+            const menuItemsContainer = document.getElementById('menu-items');
+            const cartPage = document.getElementById('cart-page');
+            const closeCartBtn = document.getElementById('close-cart');
+            const cartItemsContainer = document.getElementById('cart-items');
+            const cartTotalElement = document.getElementById('cart-total');
+            const emptyCartMessage = document.getElementById('empty-cart-message');
+            const viewCartBtn = document.getElementById('view-cart-btn');
+            const checkoutBtn = document.getElementById('checkout-btn');
+            const cartCountElement = document.getElementById('cart-count');
+            const customerInfoModal = document.getElementById('customer-info-modal');
+            const customerInfoForm = document.getElementById('customer-info-form');
+            const cancelCustomerInfoBtn = document.getElementById('cancel-customer-info');
+            const orderConfirmation = document.getElementById('order-confirmation');
+            const closeOrderConfirmationBtn = document.getElementById('close-order-confirmation');
+            const backToCartBtn = document.getElementById('back-to-cart');
+            const confirmOrderBtn = document.getElementById('confirm-order');
+            const confirmName = document.getElementById('confirm-name');
+            const confirmPhone = document.getElementById('confirm-phone');
+            const confirmTable = document.getElementById('confirm-table');
+            const confirmDate = document.getElementById('confirm-date');
+            const confirmNotes = document.getElementById('confirm-notes');
+            const confirmTotal = document.getElementById('confirm-total');
+            const orderItemsContainer = document.getElementById('order-items');
+            const ordersList = document.getElementById('orders-list');
+            const customerInvoice = document.getElementById('customer-invoice');
+            const printInvoiceBtn = document.getElementById('print-invoice');
+            const closeInvoiceBtn = document.getElementById('close-invoice');
+            const invoiceNumber = document.getElementById('invoice-number');
+            const invoiceDate = document.getElementById('invoice-date');
+            const invoiceStatus = document.getElementById('invoice-status');
+            const invoiceCustomerName = document.getElementById('invoice-customer-name');
+            const invoiceCustomerPhone = document.getElementById('invoice-customer-phone');
+            const invoiceTable = document.getElementById('invoice-table');
+            const invoiceNotes = document.getElementById('invoice-notes');
+            const invoiceItems = document.getElementById('invoice-items');
+            const invoiceSubtotal = document.getElementById('invoice-subtotal');
+            const invoiceTotal = document.getElementById('invoice-total');
+            const adminInvoice = document.getElementById('admin-invoice');
+            const printAdminInvoiceBtn = document.getElementById('print-admin-invoice');
+            const closeAdminInvoiceBtn = document.getElementById('close-admin-invoice');
+            const adminInvoiceNumber = document.getElementById('admin-invoice-number');
+            const adminInvoiceDate = document.getElementById('admin-invoice-date');
+            const adminInvoiceStatus = document.getElementById('admin-invoice-status');
+            const adminInvoiceCustomerName = document.getElementById('admin-invoice-customer-name');
+            const adminInvoiceCustomerPhone = document.getElementById('admin-invoice-customer-phone');
+            const adminInvoiceTable = document.getElementById('admin-invoice-table');
+            const adminInvoiceNotes = document.getElementById('admin-invoice-notes');
+            const adminInvoiceItems = document.getElementById('admin-invoice-items');
+            const adminInvoiceSubtotal = document.getElementById('admin-invoice-subtotal');
+            const adminInvoiceTotal = document.getElementById('admin-invoice-total');
+            const customerChat = document.getElementById('customer-chat');
+            const openChatBtn = document.getElementById('open-chat-btn');
+            const closeChatBtn = document.getElementById('close-chat');
+            const customerChatMessages = document.getElementById('customer-chat-messages');
+            const customerChatInput = document.getElementById('customer-chat-input');
+            const customerSendMessageBtn = document.getElementById('customer-send-message');
+            const adminChatMessages = document.getElementById('admin-chat-messages');
+            const adminChatInput = document.getElementById('admin-chat-input');
+            const adminSendMessageBtn = document.getElementById('admin-send-message');
+            const toggleThemeBtn = document.getElementById('toggle-theme');
+
+            // ذخیره محصولات در localStorage
+            function saveProducts() {
+                localStorage.setItem('restaurant_products', JSON.stringify(products));
+            }
+
+            // ذخیره سبد خرید در localStorage
+            function saveCart() {
+                localStorage.setItem('restaurant_cart', JSON.stringify(cart));
+                updateCartCount();
+            }
+
+            // ذخیره سفارشات در localStorage
+            function saveOrders() {
+                localStorage.setItem('restaurant_orders', JSON.stringify(orders));
+            }
+
+            // ذخیره چت‌ها در localStorage
+            function saveChats() {
+                localStorage.setItem('restaurant_chats', JSON.stringify(chats));
+            }
+
+            // به روز رسانی تعداد آیتم‌های سبد خرید
+            function updateCartCount() {
+                const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+                cartCountElement.textContent = totalItems;
+                
+                if (totalItems > 0) {
+                    cartCountElement.classList.remove('hidden');
+                } else {
+                    cartCountElement.classList.add('hidden');
+                }
+            }
+
+            // رندر منوی اصلی
+            function renderMenuItems() {
+                menuItemsContainer.innerHTML = '';
+                
+                products.forEach(product => {
+                    const menuItem = document.createElement('div');
+                    menuItem.className = 'menu-item bg-white dark:bg-gray-800 shadow-sm p-5';
+                    menuItem.innerHTML = `
+                        <div class="h-48 w-full bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
+                            <img src="${product.image}" alt="${product.name}" class="h-full w-full object-cover">
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">${product.name}</h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">${product.description}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="price-tag">${product.price.toLocaleString()} تومان</span>
+                            <button class="add-to-cart bg-orange-100 text-orange-600 px-4 py-2 rounded-lg hover:bg-orange-200 transition" data-id="${product.id}">اضافه به سبد</button>
+                        </div>
+                    `;
+                    menuItemsContainer.appendChild(menuItem);
+                });
+                
+                // افزودن رویداد به دکمه‌های اضافه به سبد
+                document.querySelectorAll('.add-to-cart').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const productId = e.target.getAttribute('data-id');
+                        addToCart(productId);
+                    });
+                });
+            }
+
+            // افزودن محصول به سبد خرید
+            function addToCart(productId) {
+                const product = products.find(p => p.id === productId);
+                
+                if (!product) return;
+                
+                const existingItem = cart.find(item => item.id === productId);
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push({
+                        id: product.id,
+                        name: product.name,
+                        price: product.price,
+                        image: product.image,
+                        quantity: 1
+                    });
+                }
+                
+                saveCart();
+                showToast(`${product.name} به سبد خرید اضافه شد`);
+            }
+
+            // نمایش نوتیفیکیشن
+            function showToast(message) {
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-4 left-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+
+            // نمایش نوتیفیکیشن سفارش برای مشتری خاص
+            function showOrderNotification(orderId, message) {
+                const order = orders.find(o => o.id === orderId);
+                if (order && currentCustomer.phone === order.customer.phone) {
+                    showToast(message);
+                }
+            }
+
+            // رندر سبد خرید
+            function renderCart() {
+                cartItemsContainer.innerHTML = '';
+                
+                if (cart.length === 0) {
+                    emptyCartMessage.classList.remove('hidden');
+                    cartItemsContainer.classList.add('hidden');
+                    cartTotalElement.textContent = '0 تومان';
+                    return;
+                }
+                
+                emptyCartMessage.classList.add('hidden');
+                cartItemsContainer.classList.remove('hidden');
+                
+                let total = 0;
+                
+                cart.forEach((item, index) => {
+                    const itemTotal = item.price * item.quantity;
+                    total += itemTotal;
+                    
+                    const cartItem = document.createElement('div');
+                    cartItem.className = 'flex items-center border-b pb-4 mb-4 dark:border-gray-700';
+                    cartItem.innerHTML = `
+                        <div class="flex-shrink-0 h-16 w-16 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                            <img src="${item.image}" alt="${item.name}" class="h-full w-full object-cover">
+                        </div>
+                        <div class="mr-4 flex-grow">
+                            <h3 class="font-bold dark:text-white">${item.name}</h3>
+                            <p class="text-gray-600 dark:text-gray-300">${item.price.toLocaleString()} تومان</p>
+                        </div>
+                        <div class="flex items-center">
+                            <button class="decrease-quantity bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-2 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition" data-index="${index}">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <span class="mx-2 dark:text-white">${item.quantity}</span>
+                            <button class="increase-quantity bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-2 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition" data-index="${index}">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="remove-item bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 px-3 py-1 rounded-lg mr-2 hover:bg-red-200 dark:hover:bg-red-800 transition" data-index="${index}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    cartItemsContainer.appendChild(cartItem);
+                });
+                
+                cartTotalElement.textContent = `${total.toLocaleString()} تومان`;
+                
+                // افزودن رویدادها به دکمه‌های سبد خرید
+                document.querySelectorAll('.increase-quantity').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const index = e.target.closest('button').getAttribute('data-index');
+                        cart[index].quantity += 1;
+                        saveCart();
+                        renderCart();
+                    });
+                });
+                
+                document.querySelectorAll('.decrease-quantity').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const index = e.target.closest('button').getAttribute('data-index');
+                        if (cart[index].quantity > 1) {
+                            cart[index].quantity -= 1;
+                        } else {
+                            cart.splice(index, 1);
+                        }
+                        saveCart();
+                        renderCart();
+                    });
+                });
+                
+                document.querySelectorAll('.remove-item').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const index = e.target.closest('button').getAttribute('data-index');
+                        cart.splice(index, 1);
+                        saveCart();
+                        renderCart();
+                    });
+                });
+            }
+
+            // رندر سفارشات در پنل مدیریت
+            function renderOrders() {
+                ordersList.innerHTML = '';
+                
+                if (orders.length === 0) {
+                    ordersList.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-4">هیچ سفارشی ثبت نشده است</p>';
+                    return;
+                }
+                
+                orders.forEach((order, index) => {
+                    const orderDiv = document.createElement('div');
+                    orderDiv.className = 'order-item dark:border-gray-700';
+                    orderDiv.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-bold dark:text-white">سفارش شماره ${index + 1}</h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">${order.date}</p>
+                            </div>
+                            <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">${order.status}</span>
+                        </div>
+                        <div class="mb-2">
+                            <p class="text-gray-600 dark:text-gray-300">مشتری: ${order.customer.name} (میز ${order.customer.table})</p>
+                            <p class="text-gray-600 dark:text-gray-300">تلفن: ${order.customer.phone}</p>
+                        </div>
+                        <div class="mb-2">
+                            <p class="font-bold dark:text-white">محصولات:</p>
+                            <ul class="list-disc mr-4 mt-2 dark:text-gray-300">
+                                ${order.items.map(item => `<li>${item.name} (${item.quantity} عدد) - ${(item.price * item.quantity).toLocaleString()} تومان</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="flex justify-between items-center mt-3">
+                            <p class="font-bold dark:text-white">جمع کل: ${order.total.toLocaleString()} تومان</p>
+                            ${order.status !== 'تکمیل شده' ? `
+                            <button class="complete-order bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition" data-index="${index}" data-order-id="${order.id}">
+                                تکمیل شده
+                            </button>
+                            ` : ''}
+                            <button class="view-order-invoice bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition" data-index="${index}">
+                                مشاهده فاکتور
+                            </button>
+                            <button class="chat-with-customer bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600 transition" data-customer-phone="${order.customer.phone}">
+                                چت با مشتری
+                            </button>
+                        </div>
+                        ${order.notes ? `<div class="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                            <p class="text-gray-600 dark:text-gray-300">توضیحات: ${order.notes}</p>
+                        </div>` : ''}
+                    `;
+                    
+                    ordersList.appendChild(orderDiv);
+                });
+                
+                // افزودن رویداد به دکمه‌های تکمیل سفارش
+                document.querySelectorAll('.complete-order').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const index = e.target.getAttribute('data-index');
+                        const orderId = e.target.getAttribute('data-order-id');
+                        completeOrder(index, orderId);
+                    });
+                });
+                
+                // افزودن رویداد به دکمه‌های مشاهده فاکتور
+                document.querySelectorAll('.view-order-invoice').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const index = e.target.getAttribute('data-index');
+                        showAdminInvoice(index);
+                    });
+                });
+                
+                // افزودن رویداد به دکمه‌های چت با مشتری
+                document.querySelectorAll('.chat-with-customer').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const customerPhone = e.target.getAttribute('data-customer-phone');
+                        startAdminChat(customerPhone);
+                    });
+                });
+            }
+
+            // تکمیل سفارش
+            function completeOrder(index, orderId) {
+                if (confirm('آیا این سفارش تکمیل شده است؟')) {
+                    orders[index].status = 'تکمیل شده';
+                    saveOrders();
+                    renderOrders();
+                    showOrderNotification(orderId, 'سفارش شما تکمیل شد و آماده تحویل است');
+                }
+            }
+
+            // رندر پیام‌های چت
+            function renderChatMessages(chatId, isAdmin = false) {
+                const chatContainer = isAdmin ? adminChatMessages : customerChatMessages;
+                chatContainer.innerHTML = '';
+                
+                if (!chats[chatId] || chats[chatId].messages.length === 0) {
+                    chatContainer.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-4">هیچ پیامی وجود ندارد</p>';
+                    return;
+                }
+                
+                chats[chatId].messages.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message ${msg.sender === 'customer' ? 'customer-message' : 'admin-message'}`;
+                    
+                    const time = new Date(msg.timestamp).toLocaleTimeString('fa-IR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    messageDiv.innerHTML = `
+                        <p>${msg.text}</p>
+                        <p class="message-time">${time}</p>
+                    `;
+                    
+                    chatContainer.appendChild(messageDiv);
+                });
+                
+                // اسکرول به پایین
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+
+            // شروع چت از طرف مشتری
+            function startCustomerChat() {
+                if (!currentCustomer.phone) {
+                    showToast('لطفاً ابتدا اطلاعات خود را وارد کنید');
+                    return;
+                }
+                
+                currentChatId = `chat_${currentCustomer.phone}`;
+                
+                if (!chats[currentChatId]) {
+                    chats[currentChatId] = {
+                        customer: currentCustomer,
+                        messages: []
+                    };
+                    saveChats();
+                }
+                
+                renderChatMessages(currentChatId);
+                customerChat.classList.remove('hidden');
+                openChatBtn.classList.add('hidden');
+            }
+
+            // شروع چت از طرف ادمین
+            function startAdminChat(customerPhone) {
+                currentChatId = `chat_${customerPhone}`;
+                
+                if (!chats[currentChatId]) {
+                    const order = orders.find(o => o.customer.phone === customerPhone);
+                    if (order) {
+                        chats[currentChatId] = {
+                            customer: order.customer,
+                            messages: []
+                        };
+                        saveChats();
+                    }
+                }
+                
+                renderChatMessages(currentChatId, true);
+            }
+
+            // ارسال پیام از طرف مشتری
+            function sendCustomerMessage() {
+                const messageText = customerChatInput.value.trim();
+                if (!messageText || !currentChatId) return;
+                
+                const newMessage = {
+                    sender: 'customer',
+                    text: messageText,
+                    timestamp: new Date().toISOString()
+                };
+                
+                chats[currentChatId].messages.push(newMessage);
+                saveChats();
+                renderChatMessages(currentChatId);
+                
+                customerChatInput.value = '';
+                
+                // شبیه‌سازی پاسخ خودکار
+                setTimeout(() => {
+                    const autoReply = {
+                        sender: 'admin',
+                        text: 'پیام شما دریافت شد. به زودی پاسخ داده خواهد شد.',
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    chats[currentChatId].messages.push(autoReply);
+                    saveChats();
+                    renderChatMessages(currentChatId);
+                    
+                    // اگر پنل ادمین باز است، چت را به روز رسانی کن
+                    if (adminPanel.classList.contains('hidden') === false) {
+                        renderChatMessages(currentChatId, true);
+                    }
+                }, 2000);
+            }
+
+            // ارسال پیام از طرف ادمین
+            function sendAdminMessage() {
+                const messageText = adminChatInput.value.trim();
+                if (!messageText || !currentChatId) return;
+                
+                const newMessage = {
+                    sender: 'admin',
+                    text: messageText,
+                    timestamp: new Date().toISOString()
+                };
+                
+                chats[currentChatId].messages.push(newMessage);
+                saveChats();
+                renderChatMessages(currentChatId, true);
+                
+                adminChatInput.value = '';
+                
+                // به مشتری نوتیفیکیشن نشان بده
+                showOrderNotification(currentChatId.replace('chat_', ''), 'پیام جدید از پشتیبانی دریافت کردید');
+            }
+
+            // نمایش فرم اطلاعات مشتری
+            function showCustomerInfoForm() {
+                customerInfoModal.classList.remove('hidden');
+            }
+
+            // نمایش صفحه تأیید سفارش
+            function showOrderConfirmation() {
+                // محاسبه جمع کل
+                const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                
+                // پر کردن اطلاعات مشتری
+                confirmName.textContent = currentCustomer.name;
+                confirmPhone.textContent = currentCustomer.phone;
+                confirmTable.textContent = currentCustomer.table;
+                confirmDate.textContent = new Date().toLocaleString('fa-IR');
+                confirmNotes.textContent = currentCustomer.notes || '---';
+                confirmTotal.textContent = `${total.toLocaleString()} تومان`;
+                
+                // پر کردن آیتم‌های سفارش
+                orderItemsContainer.innerHTML = '';
+                cart.forEach(item => {
+                    const orderItem = document.createElement('div');
+                    orderItem.className = 'flex justify-between items-center border-b pb-2 mb-2 dark:border-gray-700';
+                    orderItem.innerHTML = `
+                        <div>
+                            <p class="font-bold dark:text-white">${item.name}</p>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm">${item.price.toLocaleString()} تومان × ${item.quantity}</p>
+                        </div>
+                        <p class="font-bold dark:text-white">${(item.price * item.quantity).toLocaleString()} تومان</p>
+                    `;
+                    orderItemsContainer.appendChild(orderItem);
+                });
+                
+                // نمایش صفحه تأیید
+                orderConfirmation.classList.remove('hidden');
+            }
+
+            // نمایش فاکتور مشتری
+            function showCustomerInvoice(order) {
+                // پر کردن اطلاعات فاکتور
+                invoiceNumber.textContent = order.id;
+                invoiceDate.textContent = order.date;
+                invoiceStatus.textContent = order.status;
+                invoiceCustomerName.textContent = order.customer.name;
+                invoiceCustomerPhone.textContent = order.customer.phone;
+                invoiceTable.textContent = order.customer.table;
+                invoiceNotes.textContent = order.notes || '---';
+                
+                // پر کردن آیتم‌های فاکتور
+                invoiceItems.innerHTML = '';
+                order.items.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-200 dark:border-gray-700';
+                    row.innerHTML = `
+                        <td class="py-3 px-4 dark:text-white">${item.name}</td>
+                        <td class="py-3 px-4 text-center dark:text-white">${item.quantity}</td>
+                        <td class="py-3 px-4 dark:text-white">${item.price.toLocaleString()} تومان</td>
+                        <td class="py-3 px-4 dark:text-white">${itemTotal.toLocaleString()} تومان</td>
+                    `;
+                    invoiceItems.appendChild(row);
+                });
+                
+                // محاسبه جمع کل
+                invoiceSubtotal.textContent = `${order.total.toLocaleString()} تومان`;
+                invoiceTotal.textContent = `${order.total.toLocaleString()} تومان`;
+                
+                // نمایش فاکتور
+                customerInvoice.classList.remove('hidden');
+            }
+
+            // نمایش فاکتور مدیریت
+            function showAdminInvoice(index) {
+                const order = orders[index];
+                
+                // پر کردن اطلاعات فاکتور
+                adminInvoiceNumber.textContent = order.id;
+                adminInvoiceDate.textContent = order.date;
+                adminInvoiceStatus.textContent = order.status;
+                adminInvoiceCustomerName.textContent = order.customer.name;
+                adminInvoiceCustomerPhone.textContent = order.customer.phone;
+                adminInvoiceTable.textContent = order.customer.table;
+                adminInvoiceNotes.textContent = order.notes || '---';
+                
+                // پر کردن آیتم‌های فاکتور
+                adminInvoiceItems.innerHTML = '';
+                order.items.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-200 dark:border-gray-700';
+                    row.innerHTML = `
+                        <td class="py-3 px-4 dark:text-white">${item.name}</td>
+                        <td class="py-3 px-4 text-center dark:text-white">${item.quantity}</td>
+                        <td class="py-3 px-4 dark:text-white">${item.price.toLocaleString()} تومان</td>
+                        <td class="py-3 px-4 dark:text-white">${itemTotal.toLocaleString()} تومان</td>
+                    `;
+                    adminInvoiceItems.appendChild(row);
+                });
+                
+                // محاسبه جمع کل
+                adminInvoiceSubtotal.textContent = `${order.total.toLocaleString()} تومان`;
+                adminInvoiceTotal.textContent = `${order.total.toLocaleString()} تومان`;
+                
+                // نمایش فاکتور
+                adminPanel.classList.add('hidden');
+                adminInvoice.classList.remove('hidden');
+            }
+
+            // ثبت سفارش نهایی
+            function submitOrder() {
+                const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                
+                const newOrder = {
+                    id: 'ORD-' + Date.now().toString().slice(-6),
+                    date: new Date().toLocaleString('fa-IR'),
+                    status: 'در حال آماده سازی',
+                    customer: {
+                        name: currentCustomer.name,
+                        phone: currentCustomer.phone,
+                        table: currentCustomer.table
+                    },
+                    items: [...cart],
+                    total: total,
+                    notes: currentCustomer.notes
+                };
+                
+                orders.unshift(newOrder);
+                saveOrders();
+                
+                // پاک کردن سبد خرید
+                cart = [];
+                saveCart();
+                
+                // بستن تمام مدال‌ها
+                customerInfoModal.classList.add('hidden');
+                orderConfirmation.classList.add('hidden');
+                cartPage.classList.add('hidden');
+                
+                // نمایش فاکتور به مشتری
+                showCustomerInvoice(newOrder);
+                
+                // رندر مجدد در صورت نیاز
+                renderOrders();
+            }
+
+            
+            // نمایش مدال لاگین
+            adminBtn.addEventListener('click', () => {
+                loginModal.classList.remove('hidden');
+            });
+
+            // بستن مدال لاگین
+            closeLoginModal.addEventListener('click', () => {
+                loginModal.classList.add('hidden');
+            });
+
+            // لاگین
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                    loginModal.classList.add('hidden');
+                    adminPanel.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                    renderAdminProducts();
+                    renderOrders();
+                } else {
+                    loginError.classList.remove('hidden');
+                }
+            });
+
+            // خروج از پنل ادمین
+            logoutBtn.addEventListener('click', () => {
+                adminPanel.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+                loginForm.reset();
+                loginError.classList.add('hidden');
+            });
+
+            // افزودن محصول جدید
+            addProductForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('product-name').value;
+                const price = parseInt(document.getElementById('product-price').value);
+                const description = document.getElementById('product-description').value;
+                const image = document.getElementById('product-image').value || "https://placehold.co/600x400";
+                
+                if (name && price && description) {
+                    const newProduct = {
+                        id: Date.now().toString(),
+                        name,
+                        description,
+                        price,
+                        image
+                    };
+                    
+                    products.push(newProduct);
+                    saveProducts();
+                    
+                    addProductForm.reset();
+                    renderAdminProducts();
+                    renderMenuItems();
+                    
+                    showToast('محصول جدید با موفقیت اضافه شد');
+                }
+            });
+
+            // رندر محصولات در پنل ادمین
+            function renderAdminProducts() {
+                productsList.innerHTML = '';
+                
+                products.forEach((product, index) => {
+                    const productDiv = document.createElement('div');
+                    productDiv.className = 'border-b pb-4 mb-4 dark:border-gray-700 flex justify-between items-center';
+                    productDiv.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-12 w-12 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mr-3">
+                                <img src="${product.image}" alt="${product.name}" class="h-full w-full object-cover">
+                            </div>
+                            <div>
+                                <h3 class="font-bold dark:text-white">${product.name}</h3>
+                                <p class="text-gray-600 dark:text-gray-300 text-sm">${product.price.toLocaleString()} تومان</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="edit-product bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition" data-index="${index}">ویرایش</button>
+                            <button class="delete-product bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition" data-index="${index}">حذف</button>
+                        </div>
+                    `;
+                    
+                    productsList.appendChild(productDiv);
+                });
+                
+                // افزودن رویدادها به دکمه‌های ویرایش و حذف
+                document.querySelectorAll('.edit-product').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const index = e.target.getAttribute('data-index');
+                        editProduct(index);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-product').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const index = e.target.getAttribute('data-index');
+                        deleteProduct(index);
+                    });
+                });
+            }
+
+            // ویرایش محصول
+            function editProduct(index) {
+                const product = products[index];
+                
+                document.getElementById('edit-index').value = index;
+                document.getElementById('edit-name').value = product.name;
+                document.getElementById('edit-price').value = product.price;
+                document.getElementById('edit-description').value = product.description;
+                document.getElementById('edit-image').value = product.image;
+                
+                editModal.classList.remove('hidden');
+            }
+
+            // ذخیره تغییرات ویرایش
+            editProductForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const index = document.getElementById('edit-index').value;
+                const name = document.getElementById('edit-name').value;
+                const price = parseInt(document.getElementById('edit-price').value);
+                const description = document.getElementById('edit-description').value;
+                const image = document.getElementById('edit-image').value;
+                
+                products[index] = {
+                    ...products[index],
+                    name,
+                    description,
+                    price,
+                    image: image || "https://placehold.co/600x400"
+                };
+                
+                saveProducts();
+                editModal.classList.add('hidden');
+                renderAdminProducts();
+                renderMenuItems();
+                
+                showToast('تغییرات محصول با موفقیت ذخیره شد');
+            });
+
+            // حذف محصول
+            function deleteProduct(index) {
+                if (confirm('آیا از حذف این محصول مطمئن هستید؟')) {
+                    products.splice(index, 1);
+                    saveProducts();
+                    renderAdminProducts();
+                    renderMenuItems();
+                    
+                    showToast('محصول با موفقیت حذف شد');
+                }
+            }
+
+            // انصراف از ویرایش
+            cancelEditBtn.addEventListener('click', () => {
+                editModal.classList.add('hidden');
+            });
+
+            // باز کردن صفحه سبد خرید
+            viewCartBtn.addEventListener('click', () => {
+                cartPage.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                renderCart();
+            });
+
+            // کلیک روی آیکون سبد خرید در هدر
+            document.getElementById('view-cart').addEventListener('click', () => {
+                cartPage.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                renderCart();
+            });
+
+            // بستن صفحه سبد خرید
+            closeCartBtn.addEventListener('click', () => {
+                cartPage.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            });
+            // پرداخت نهایی - نمایش فرم اطلاعات مشتری
+            checkoutBtn.addEventListener('click', () => {
+                if (cart.length === 0) return;
+                
+                cartPage.classList.add('hidden');
+                showCustomerInfoForm();
+            });
+
+            // ثبت اطلاعات مشتری
+            customerInfoForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                currentCustomer = {
+                    name: document.getElementById('customer-name').value,
+                    phone: document.getElementById('customer-phone').value,
+                    table: document.getElementById('table-number').value,
+                    notes: document.getElementById('order-notes').value
+                };
+                
+                customerInfoModal.classList.add('hidden');
+                showOrderConfirmation();
+            });
+
+            // انصراف از ثبت اطلاعات مشتری
+            cancelCustomerInfoBtn.addEventListener('click', () => {
+                customerInfoModal.classList.add('hidden');
+                cartPage.classList.remove('hidden');
+            });
+
+            // بازگشت به سبد خرید از صفحه تأیید
+            backToCartBtn.addEventListener('click', () => {
+                orderConfirmation.classList.add('hidden');
+                cartPage.classList.remove('hidden');
+            });
+
+            // بستن صفحه تأیید سفارش
+            closeOrderConfirmationBtn.addEventListener('click', () => {
+                orderConfirmation.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            });
+
+            // تأیید نهایی سفارش
+            confirmOrderBtn.addEventListener('click', () => {
+                submitOrder();
+            });
+
+            // پرینت فاکتور مشتری
+            printInvoiceBtn.addEventListener('click', () => {
+                window.print();
+            });
+
+            // بستن فاکتور مشتری
+            closeInvoiceBtn.addEventListener('click', () => {
+                customerInvoice.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            });
+
+            // پرینت فاکتور مدیریت
+            printAdminInvoiceBtn.addEventListener('click', () => {
+                window.print();
+            });
+
+            // بستن فاکتور مدیریت و بازگشت به پنل
+            closeAdminInvoiceBtn.addEventListener('click', () => {
+                adminInvoice.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+            });
+
+            // باز کردن چت مشتری
+            openChatBtn.addEventListener('click', () => {
+                startCustomerChat();
+            });
+
+            // بستن چت مشتری
+            closeChatBtn.addEventListener('click', () => {
+                customerChat.classList.add('hidden');
+                openChatBtn.classList.remove('hidden');
+            });
+
+            // ارسال پیام از طرف مشتری
+            customerSendMessageBtn.addEventListener('click', sendCustomerMessage);
+            customerChatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendCustomerMessage();
+                }
+            });
+
+            // ارسال پیام از طرف ادمین
+            adminSendMessageBtn.addEventListener('click', sendAdminMessage);
+            adminChatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendAdminMessage();
+                }
+            });
+
+            // رندر اولیه
+            saveProducts(); // ذخیره محصولات پیش‌فرض در اولین بار
+            renderMenuItems();
+            updateCartCount();
+        });
+    </script>
+</body>
+</html>
